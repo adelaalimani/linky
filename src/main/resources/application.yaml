@@ -14,19 +14,21 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         default_schema: linky
-        hbm2ddl:
-          create-namespaces: true
         format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    liquibase-schema: public
 
   threads:
     virtual:
       enabled: true
 
 server:
+  forward-headers-strategy: framework
   port: 8080
 
 management:
@@ -38,3 +40,6 @@ management:
     health:
       probes:
         enabled: true
+
+linky:
+  base-url: ${LINKY_BASE_URL:http://localhost:8080}

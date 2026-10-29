@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-schema
+      author: linky
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS linky
