@@ -1,13 +1,13 @@
 package com.example.linky.service;
 
-import com.example.linky.dto.CreateShortUrlRequest;
-import com.example.linky.dto.ShortUrlResponse;
+import com.example.linky.dto.request.CreateShortUrlRequest;
+import com.example.linky.dto.response.ShortUrlResponse;
 import com.example.linky.entity.ShortUrl;
 import com.example.linky.exception.ConflictException;
 import com.example.linky.exception.NotFoundException;
+import com.example.linky.mapper.ShortUrlMapper;
 import com.example.linky.repository.ShortUrlRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,18 +20,17 @@ public class ShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
     private final ShortUrlInsertService shortUrlInsertService;
+    private final ShortUrlMapper shortUrlMapper;
 
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final int KEY_LENGTH = 7;
     private static final int MAX_KEY_ATTEMPTS = 5;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    @Value("${linky.base-url}")
-    private String baseUrl;
-
-    public ShortUrlService(ShortUrlRepository shortUrlRepository, ShortUrlInsertService shortUrlInsertService) {
+    public ShortUrlService(ShortUrlRepository shortUrlRepository, ShortUrlInsertService shortUrlInsertService, ShortUrlMapper shortUrlMapper) {
         this.shortUrlRepository = shortUrlRepository;
         this.shortUrlInsertService = shortUrlInsertService;
+        this.shortUrlMapper = shortUrlMapper;
     }
 
     public ShortUrlResponse create(CreateShortUrlRequest request) {
@@ -41,7 +40,7 @@ public class ShortUrlService {
             try {
                 ShortUrl shortUrl = shortUrlInsertService.insert(key, longUrl);
                 log.info("Created short URL with key {}", key);
-                return ShortUrlResponse.from(shortUrl, baseUrl);
+                return shortUrlMapper.toResponse(shortUrl);
             } catch (DataIntegrityViolationException ex) {
 
                 if (!isShortKeyCollision(ex)) {
@@ -55,7 +54,7 @@ public class ShortUrlService {
 
     @Transactional(readOnly = true)
     public ShortUrlResponse get(String shortKey) {
-        return ShortUrlResponse.from(findByShortKey(shortKey), baseUrl);
+        return shortUrlMapper.toResponse(findByShortKey(shortKey));
     }
 
     @Transactional

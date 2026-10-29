@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-roles
+      author: linky
+      changes:
+        - createTable:
+            schemaName: linky
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_roles_name
+  - changeSet:
+      id: 003-seed-roles
+      author: linky
+      changes:
+        - insert:
+            schemaName: linky
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: CUSTOMER
+        - insert:
+            schemaName: linky
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ADMIN

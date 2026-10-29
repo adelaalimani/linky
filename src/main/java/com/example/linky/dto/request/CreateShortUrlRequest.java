@@ -1,4 +1,4 @@
-package com.example.linky.dto;
+package com.example.linky.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

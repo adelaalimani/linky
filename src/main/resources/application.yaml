@@ -22,6 +22,12 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     liquibase-schema: public
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: mysecret
+
 
   threads:
     virtual:
@@ -43,3 +49,9 @@ management:
 
 linky:
   base-url: ${LINKY_BASE_URL:http://localhost:8080}
+
+app:
+  security:
+    jwt:
+      access-token-expiration: 86400000 # 1 day
+      refresh-token-expiration: 604800000

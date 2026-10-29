@@ -3,3 +3,9 @@ databaseChangeLog:
       file: db/changelog/changes/001-create-schema.yaml
   - include:
       file: db/changelog/changes/002-create-short-urls.yaml
+  - include:
+      file: db/changelog/changes/003-create-roles.yaml
+  - include:
+      file: db/changelog/changes/004-create-users.yaml
+  - include:
+      file: db/changelog/changes/005-create-users-roles.yaml

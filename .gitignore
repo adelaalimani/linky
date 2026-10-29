@@ -35,4 +35,6 @@ build/
 ### Secrets ###
 .env
 .env.*
+src/main/resources/keys/
+*.pem
 

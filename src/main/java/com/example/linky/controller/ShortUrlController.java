@@ -1,7 +1,7 @@
 package com.example.linky.controller;
 
-import com.example.linky.dto.CreateShortUrlRequest;
-import com.example.linky.dto.ShortUrlResponse;
+import com.example.linky.dto.request.CreateShortUrlRequest;
+import com.example.linky.dto.response.ShortUrlResponse;
 import com.example.linky.service.ShortUrlService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
