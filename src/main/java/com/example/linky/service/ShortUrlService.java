@@ -3,12 +3,15 @@ package com.example.linky.service;
 import com.example.linky.dto.request.CreateShortUrlRequest;
 import com.example.linky.dto.response.ShortUrlResponse;
 import com.example.linky.entity.ShortUrl;
+import com.example.linky.entity.User;
 import com.example.linky.exception.ConflictException;
 import com.example.linky.exception.NotFoundException;
 import com.example.linky.mapper.ShortUrlMapper;
 import com.example.linky.repository.ShortUrlRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,12 +36,12 @@ public class ShortUrlService {
         this.shortUrlMapper = shortUrlMapper;
     }
 
-    public ShortUrlResponse create(CreateShortUrlRequest request) {
+    public ShortUrlResponse create(CreateShortUrlRequest request, Long userId) {
         String longUrl = request.longUrl().trim();
         for (int attempt = 0; attempt < MAX_KEY_ATTEMPTS; attempt++) {
             String key = randomKey();
             try {
-                ShortUrl shortUrl = shortUrlInsertService.insert(key, longUrl);
+                ShortUrl shortUrl = shortUrlInsertService.insert(key, longUrl, userId);
                 log.info("Created short URL with key {}", key);
                 return shortUrlMapper.toResponse(shortUrl);
             } catch (DataIntegrityViolationException ex) {
@@ -55,6 +58,17 @@ public class ShortUrlService {
     @Transactional(readOnly = true)
     public ShortUrlResponse get(String shortKey) {
         return shortUrlMapper.toResponse(findByShortKey(shortKey));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ShortUrlResponse> getAll(User user, Pageable pageable) {
+        boolean isAdmin = user.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+        Page<ShortUrl> shortUrls = isAdmin
+                ? shortUrlRepository.findAll(pageable)
+                : shortUrlRepository.findByUserId(user.getId(), pageable);
+        return shortUrls.map(shortUrlMapper::toResponse);
     }
 
     @Transactional

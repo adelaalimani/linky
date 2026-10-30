@@ -23,11 +23,15 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     liquibase-schema: public
   data:
+    web:
+      pageable:
+        serialization-mode: via-dto
+        max-page-size: 100
     redis:
-      host: localhost
-      port: 6379
-      password: mysecret
-
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
 
   threads:
     virtual:
@@ -55,3 +59,10 @@ app:
     jwt:
       access-token-expiration: 86400000 # 1 day
       refresh-token-expiration: 604800000
+  rate-limit:
+    default: # per user, or per IP when not logged in
+      capacity: 60 # requests allowed per refill period
+      refill-period: 1m
+    auth: # /api/v1/auth/**, per IP
+      capacity: 5
+      refill-period: 1m

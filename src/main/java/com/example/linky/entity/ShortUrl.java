@@ -38,9 +38,14 @@ public class ShortUrl {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    public ShortUrl(String shortKey, String longUrl) {
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    public ShortUrl(String shortKey, String longUrl, User user) {
         this.shortKey = shortKey;
         this.longUrl = longUrl;
+        this.user = user;
     }
 
     public void deactivate() {
