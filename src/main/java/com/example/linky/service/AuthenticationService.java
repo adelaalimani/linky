@@ -2,12 +2,10 @@ package com.example.linky.service;
 
 import com.example.linky.dto.request.LoginRequest;
 import com.example.linky.dto.response.AuthenticationResponse;
-import com.example.linky.dto.request.RefreshTokenRequest;
 import com.example.linky.dto.request.RegistrationRequest;
 import com.example.linky.entity.Role;
 import com.example.linky.entity.User;
 import com.example.linky.exception.BadRequestException;
-import com.example.linky.exception.UnAuthorizedException;
 import com.example.linky.mapper.UserMapper;
 import com.example.linky.repository.RoleRepository;
 import com.example.linky.repository.UserRepository;
@@ -49,20 +47,6 @@ public class AuthenticationService {
         User user = (User) authentication.getPrincipal();
         String token = jwtService.generateAccessToken(user.getUsername());
         String refreshToken = jwtService.generateRefreshToken(user.getUsername());
-        return new AuthenticationResponse(token, refreshToken);
-    }
-
-    public AuthenticationResponse refresh(RefreshTokenRequest request) {
-        String refreshToken = request.refreshToken();
-        String username = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findByEmailIgnoreCase(username).orElseThrow(
-                () -> new UnAuthorizedException("Invalid refresh token")
-        );
-        if (!user.isEnabled() || !user.isAccountNonLocked()
-                || !jwtService.isRefreshTokenValid(refreshToken, user.getUsername())) {
-            throw new UnAuthorizedException("Invalid refresh token");
-        }
-        String token = jwtService.generateAccessToken(user.getUsername());
         return new AuthenticationResponse(token, refreshToken);
     }
 

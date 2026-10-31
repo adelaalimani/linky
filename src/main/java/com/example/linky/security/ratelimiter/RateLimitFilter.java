@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import static com.example.linky.security.SecurityUrls.*;
+import static com.example.linky.security.utils.SecurityUrls.*;
 
 @Slf4j
 @Component
@@ -58,7 +58,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // Auth endpoints get a stricter, per-IP bucket of their own to slow down password guessing
         boolean authRequest = AUTH_MATCHER.matches(request);
         String key = authRequest
                 ? "ratelimit:auth:ip:" + request.getRemoteAddr()
@@ -73,7 +72,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     .build(key, () -> bucketConfiguration)
                     .tryConsumeAndReturnRemaining(1);
         } catch (Exception e) {
-            // Fail open: if Redis is unavailable, don't take the whole API down with it
             log.error("Rate limiter unavailable, letting request through", e);
             filterChain.doFilter(request, response);
             return;

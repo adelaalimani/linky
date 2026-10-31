@@ -3,7 +3,6 @@ package com.example.linky.controller;
 import com.example.linky.service.AuthenticationService;
 import com.example.linky.dto.request.LoginRequest;
 import com.example.linky.dto.response.AuthenticationResponse;
-import com.example.linky.dto.request.RefreshTokenRequest;
 import com.example.linky.dto.request.RegistrationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,11 +31,6 @@ public class AuthenticationController {
     public ResponseEntity<Void> register(@Valid @RequestBody  RegistrationRequest request) {
         this.service.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthenticationResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(this.service.refresh(request));
     }
 
 }

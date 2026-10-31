@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static com.example.linky.security.SecurityUrls.*;
+import static com.example.linky.security.utils.SecurityUrls.*;
 
 @Configuration
 @EnableWebSecurity
@@ -39,7 +39,6 @@ public class SecurityConfig {
                                 .requestMatchers(DOCS_URLS).permitAll()
                                 .requestMatchers(ACTUATOR_URLS).permitAll()
                                 .requestMatchers(HttpMethod.GET, REDIRECT_URL).permitAll()
-                                .requestMatchers(ADMIN_URLS).hasRole("ADMIN")
                                 .anyRequest().authenticated()
 
                 )
