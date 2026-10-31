@@ -60,10 +60,6 @@ public class JwtService {
         return isTokenValid(token, expectedUsername, ACCESS_TOKEN);
     }
 
-    public boolean isRefreshTokenValid(String token, String expectedUsername) {
-        return isTokenValid(token, expectedUsername, REFRESH_TOKEN);
-    }
-
     private boolean isTokenValid(String token, String expectedUsername, String expectedType) {
         Claims claims = extractClaims(token);
         return claims.getSubject().equals(expectedUsername)

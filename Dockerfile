@@ -17,12 +17,13 @@ RUN ./mvnw clean package -DskipTests -B
 FROM eclipse-temurin:25-jdk-alpine AS jre-build
 
 RUN $JAVA_HOME/bin/jlink \
-    --add-modules java.base,java.sql,java.naming,java.desktop,java.management,java.instrument,java.security.jgss,java.xml,java.logging,java.net.http,java.prefs,java.security.sasl,java.transaction.xa,jdk.unsupported,jdk.crypto.ec,java.compiler \
+    --add-modules java.base,java.sql,java.naming,java.desktop,java.management,java.instrument,java.security.jgss,java.xml,java.logging,java.net.http,java.prefs,java.security.sasl,java.transaction.xa,jdk.unsupported,jdk.crypto.ec,java.compiler,jdk.net \
     --strip-debug \
     --no-man-pages \
     --no-header-files \
     --compress=zip-6 \
     --output /javaruntime
+
 # Stage 3: Run the application
 FROM alpine:3.21
 

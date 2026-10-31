@@ -14,7 +14,6 @@ import java.util.Optional;
 public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
 
     Optional<ShortUrl> findByShortKey(String shortKey);
-
     Page<ShortUrl> findByUserId(Long userId, Pageable pageable);
 
     @Modifying
@@ -27,9 +26,6 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
             )
         WHERE id = :id
         """, nativeQuery = true)
-    int addClicks(
-            @Param("id") Long id,
-            @Param("clicks") long clicks,
-            @Param("lastAccessedAt") Instant lastAccessedAt
+    int addClicks(@Param("id") Long id, @Param("clicks") long clicks, @Param("lastAccessedAt") Instant lastAccessedAt
     );
 }
