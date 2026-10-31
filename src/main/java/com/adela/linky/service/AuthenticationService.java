@@ -56,13 +56,9 @@ public class AuthenticationService {
         checkUserPhoneNumber(request.phoneNumber());
         checkPasswords(request.password(), request.confirmPassword());
 
-        Role userRole = roleRepository.findByName("CUSTOMER").orElseThrow(
-                () -> new BadRequestException("Role CUSTOMER not found")
-        );
-        List<Role> roles = List.of(userRole);
         User user = userMapper.toUser(request);
-        user.setRoles(roles);
-        log.info("Registering user: {}", user);
+        user.setRoles(List.of(getCustomerRole()));
+        log.info("Registering user: {}", user.getUsername());
         userRepository.save(user);
     }
 
@@ -84,6 +80,11 @@ public class AuthenticationService {
         if (userExists) {
             throw new BadRequestException("User with email " + email + " already exists");
         }
+    }
+
+    private Role getCustomerRole() {
+        return roleRepository.findByName("CUSTOMER").orElseThrow(() ->
+                        new IllegalStateException("CUSTOMER role not found in database"));
     }
 
 
