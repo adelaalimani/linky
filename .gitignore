@@ -38,3 +38,12 @@ build/
 src/main/resources/keys/
 *.pem
 
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfstate.lock.info
+**/terraform.tfvars
+**/*.auto.tfvars
+**/tfplan
+
