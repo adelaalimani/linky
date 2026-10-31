@@ -8,6 +8,7 @@ public record ShortUrlResponse(
         String longUrl,
         boolean active,
         long usedCount,
+        Instant lastAccessedAt,
         Instant createdAt
 ) {
 }

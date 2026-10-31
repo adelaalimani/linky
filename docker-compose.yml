@@ -20,7 +20,6 @@ services:
   redis:
     image: redis:8-alpine
     container_name: linky-redis
-    # Disable the passwordless "default" user and create our own ACL user with full access
     command:
       - redis-server
       - --user
@@ -33,11 +32,19 @@ services:
       - "~*"
       - "&*"
       - "+@all"
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - volatile-lfu
+      - --appendonly
+      - "yes"
     environment:
       REDIS_USERNAME: ${REDIS_USERNAME}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - linky-redisdata:/data
     healthcheck:
       test: ["CMD-SHELL", "redis-cli --no-auth-warning --user \"$$REDIS_USERNAME\" --pass \"$$REDIS_PASSWORD\" ping | grep PONG"]
       interval: 5s
@@ -45,5 +52,7 @@ services:
       retries: 10
     restart: unless-stopped
 
+
 volumes:
   linky-pgdata:
+  linky-redisdata:

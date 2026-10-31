@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-create-users-roles.yaml
   - include:
       file: db/changelog/changes/002-create-short-urls.yaml
+  - include:
+      file: db/changelog/changes/006-create-short-url-daily-stats.yaml

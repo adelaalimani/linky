@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
@@ -17,6 +18,18 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
     Page<ShortUrl> findByUserId(Long userId, Pageable pageable);
 
     @Modifying
-    @Query("update ShortUrl s set s.usedCount = s.usedCount + 1 where s.id = :id")
-    void incrementUsedCount(@Param("id") Long id);
+    @Query(value = """
+        UPDATE linky.short_urls
+        SET used_count = used_count + :clicks,
+            last_accessed_at = GREATEST(
+                last_accessed_at,
+                CAST(:lastAccessedAt AS TIMESTAMP WITH TIME ZONE)
+            )
+        WHERE id = :id
+        """, nativeQuery = true)
+    int addClicks(
+            @Param("id") Long id,
+            @Param("clicks") long clicks,
+            @Param("lastAccessedAt") Instant lastAccessedAt
+    );
 }

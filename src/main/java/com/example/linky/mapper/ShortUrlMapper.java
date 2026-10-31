@@ -21,6 +21,7 @@ public class ShortUrlMapper {
                 shortUrl.getLongUrl(),
                 shortUrl.isActive(),
                 shortUrl.getUsedCount(),
+                shortUrl.getLastAccessedAt(),
                 shortUrl.getCreatedAt()
         );
     }

@@ -39,6 +39,10 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: last_accessed_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueNumeric: now()
+              - column:
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: now()

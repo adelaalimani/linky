@@ -35,6 +35,9 @@ public class ShortUrl {
     @Column(name = "used_count", nullable = false)
     private long usedCount = 0;
 
+    @Column(name = "last_accessed_at")
+    private Instant lastAccessedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

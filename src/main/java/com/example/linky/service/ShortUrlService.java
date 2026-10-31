@@ -5,6 +5,7 @@ import com.example.linky.dto.response.ShortUrlResponse;
 import com.example.linky.entity.ShortUrl;
 import com.example.linky.entity.User;
 import com.example.linky.exception.ConflictException;
+import com.example.linky.exception.ForbiddenException;
 import com.example.linky.exception.NotFoundException;
 import com.example.linky.mapper.ShortUrlMapper;
 import com.example.linky.repository.ShortUrlRepository;
@@ -14,6 +15,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
 
@@ -23,6 +28,9 @@ public class ShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
     private final ShortUrlInsertService shortUrlInsertService;
+    private final ShortUrlCacheService shortUrlCacheService;
+    private final LinkAnalyticsService linkAnalyticsService;
+    private final CacheManager cacheManager;
     private final ShortUrlMapper shortUrlMapper;
 
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -30,9 +38,12 @@ public class ShortUrlService {
     private static final int MAX_KEY_ATTEMPTS = 5;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    public ShortUrlService(ShortUrlRepository shortUrlRepository, ShortUrlInsertService shortUrlInsertService, ShortUrlMapper shortUrlMapper) {
+    public ShortUrlService(ShortUrlRepository shortUrlRepository, ShortUrlInsertService shortUrlInsertService, ShortUrlCacheService shortUrlCacheService, LinkAnalyticsService linkAnalyticsService, CacheManager cacheManager, ShortUrlMapper shortUrlMapper) {
         this.shortUrlRepository = shortUrlRepository;
         this.shortUrlInsertService = shortUrlInsertService;
+        this.shortUrlCacheService = shortUrlCacheService;
+        this.linkAnalyticsService = linkAnalyticsService;
+        this.cacheManager = cacheManager;
         this.shortUrlMapper = shortUrlMapper;
     }
 
@@ -55,40 +66,50 @@ public class ShortUrlService {
         throw new ConflictException("Could not generate a unique short key, please try again");
     }
 
-    @Transactional(readOnly = true)
-    public ShortUrlResponse get(String shortKey) {
-        return shortUrlMapper.toResponse(findByShortKey(shortKey));
-    }
 
     @Transactional(readOnly = true)
     public Page<ShortUrlResponse> getAll(User user, Pageable pageable) {
-        boolean isAdmin = user.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
 
-        Page<ShortUrl> shortUrls = isAdmin
+        Page<ShortUrl> shortUrls = isAdmin(user)
                 ? shortUrlRepository.findAll(pageable)
                 : shortUrlRepository.findByUserId(user.getId(), pageable);
         return shortUrls.map(shortUrlMapper::toResponse);
     }
 
-    @Transactional
     public String resolve(String shortKey) {
-        ShortUrl shortUrl = findByShortKey(shortKey);
-        if (!shortUrl.isActive()) {
-            throw new NotFoundException("Short url " + shortKey + " is not active");
-        }
-        shortUrlRepository.incrementUsedCount(shortUrl.getId());
-        return shortUrl.getLongUrl();
+        String longUrl = shortUrlCacheService.findLongUrl(shortKey);
+        linkAnalyticsService.recordClick(shortKey);
+        return longUrl;
     }
 
     @Transactional
-    public void deactivate(String shortKey) {
-        findByShortKey(shortKey).deactivate();
+    public void deactivate(String shortKey, User user) {
+        ShortUrl shortUrl = shortUrlRepository.findByShortKey(shortKey)
+                .orElseThrow(() -> new NotFoundException("Short url " + shortKey + " not found"));
+
+        if (!isAdmin(user) && !shortUrl.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException(
+                    "You are not authorized to deactivate this short URL"
+            );
+        }
+        shortUrl.deactivate();
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        Cache cache = cacheManager.getCache("shortUrls");
+                        if (cache != null) {
+                            cache.evict(shortKey);
+                        }
+                    }
+                }
+        );
     }
 
-    private ShortUrl findByShortKey(String shortKey) {
-        return shortUrlRepository.findByShortKey(shortKey)
-                .orElseThrow(() -> new NotFoundException("Short url " + shortKey + " not found"));
+    private boolean isAdmin(User user) {
+        return user.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private static String randomKey() {

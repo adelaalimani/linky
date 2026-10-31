@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-short-url-daily-stats
+      author: linky
+      changes:
+        - createTable:
+            schemaName: linky
+            tableName: short_url_daily_stats
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: short_url_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_short_url_daily_stats_short_url
+                    references: linky.short_urls(id)
+                    deleteCascade: true
+              - column:
+                  name: stat_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clicks
+                  type: BIGINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            schemaName: linky
+            tableName: short_url_daily_stats
+            columnNames: short_url_id, stat_date
+            constraintName: uk_short_url_daily_stats

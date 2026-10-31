@@ -12,7 +12,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +32,6 @@ public class ShortUrlController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
     public ResponseEntity<Page<ShortUrlResponse>> getAll(
             @AuthenticationPrincipal User user,
             @ParameterObject
@@ -42,14 +40,9 @@ public class ShortUrlController {
         return ResponseEntity.ok(shortUrlService.getAll(user, pageable));
     }
 
-    @GetMapping("/{shortKey}")
-    public ResponseEntity<ShortUrlResponse> get(@PathVariable String shortKey) {
-        return ResponseEntity.ok(shortUrlService.get(shortKey));
-    }
-
     @PatchMapping("/{shortKey}/deactivate")
-    public ResponseEntity<Void> deactivate(@PathVariable String shortKey) {
-        shortUrlService.deactivate(shortKey);
+    public ResponseEntity<Void> deactivate(@PathVariable String shortKey, @AuthenticationPrincipal User user) {
+        shortUrlService.deactivate(shortKey, user);
         return ResponseEntity.noContent().build();
     }
 }
