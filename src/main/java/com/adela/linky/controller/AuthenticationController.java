@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Public endpoints for logging in and registering; no token needed.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthenticationController {
@@ -22,11 +25,17 @@ public class AuthenticationController {
         this.authenticateService = authenticateService;
     }
 
+    /**
+     * Checks the email and password and returns a JWT access token.
+     */
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authenticateService.login(request));
     }
 
+    /**
+     * Creates a new user with the CUSTOMER role.
+     */
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegistrationRequest request) {
         authenticateService.register(request);

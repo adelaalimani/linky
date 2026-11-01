@@ -13,6 +13,9 @@ import java.util.List;
 @Repository
 public interface ShortUrlDailyStatsRepository extends JpaRepository<ShortUrlDailyStats, Long> {
 
+    /**
+     * Adds clicks to a link's row for the given day, creating the row if it doesn't exist yet.
+     */
     @Modifying
     @Query(value = """
             INSERT INTO linky.short_url_daily_stats

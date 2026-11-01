@@ -113,7 +113,7 @@ class LinkAnalyticsServiceTest {
         return User.builder()
                 .id(id)
                 .email("user" + id + "@linky.test")
-                .roles(List.of(Role.builder().name(roleName).build()))
+                .roles(List.of(new Role(null, roleName)))
                 .build();
     }
 

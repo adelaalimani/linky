@@ -12,10 +12,13 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Represents a registered user who logs in with email and password.
+ */
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Table(name = "users")

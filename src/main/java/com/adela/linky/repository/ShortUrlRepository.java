@@ -16,6 +16,10 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
     Optional<ShortUrl> findByShortKey(String shortKey);
     Page<ShortUrl> findByUserId(Long userId, Pageable pageable);
 
+    /**
+     * Adds a batch of clicks to the total and keeps the latest access time.
+     * Done in SQL so concurrent updates can't overwrite each other.
+     */
     @Modifying
     @Query(value = """
         UPDATE linky.short_urls
@@ -26,6 +30,5 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
             )
         WHERE id = :id
         """, nativeQuery = true)
-    int addClicks(@Param("id") Long id, @Param("clicks") long clicks, @Param("lastAccessedAt") Instant lastAccessedAt
-    );
+    int addClicks(@Param("id") Long id, @Param("clicks") long clicks, @Param("lastAccessedAt") Instant lastAccessedAt);
 }

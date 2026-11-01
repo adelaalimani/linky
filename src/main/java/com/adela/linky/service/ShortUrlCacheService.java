@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 
+/**
+ * Cached lookup of a short key's long URL. It's a separate class because @Cacheable works through
+ * a Spring proxy, so calling it from inside ShortUrlService itself would skip the cache.
+ */
 @Service
 @Slf4j
 public class ShortUrlCacheService {
@@ -18,6 +22,10 @@ public class ShortUrlCacheService {
         this.shortUrlRepository = shortUrlRepository;
     }
 
+    /**
+     * Returns the long URL from Redis, or from Postgres on a cache miss and caches it.
+     * Unknown or inactive keys throw NotFoundException and are not cached.
+     */
     @Cacheable(cacheNames = "shortUrls", key = "#shortKey")
     @Transactional(readOnly = true)
     public String findLongUrl(String shortKey) {

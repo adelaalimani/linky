@@ -15,9 +15,15 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
+/**
+ * Sets up Bucket4j to keep rate-limit buckets in Redis, so limits are shared and survive restarts.
+ */
 @Configuration
 public class Bucket4jConfig {
 
+    /**
+     * Separate Lettuce Redis client for Bucket4j, using the same host and credentials as Spring Data Redis.
+     */
     @Bean(destroyMethod = "shutdown")
     public RedisClient redisClient(
             @Value("${spring.data.redis.host}") String redisHost,
@@ -36,14 +42,20 @@ public class Bucket4jConfig {
         return RedisClient.create(uri.build());
     }
 
+    /**
+     * Redis connection, the format Bucket4j stores buckets in.
+     */
     @Bean(destroyMethod = "close")
     public StatefulRedisConnection<String, byte[]> rateLimitRedisConnection(RedisClient redisClient) {
         return redisClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
     }
 
+    /**
+     * Gives RateLimitFilter access to the buckets in Redis, one per key (user or IP).
+     * A bucket's Redis entry expires once it would be full again plus 10 seconds, so idle buckets get cleaned up.
+     */
     @Bean
     public ProxyManager<String> proxyManager(StatefulRedisConnection<String, byte[]> rateLimitRedisConnection) {
-        // Remove a bucket from Redis once it has fully refilled, so idle keys don't pile up
         return Bucket4jLettuce.casBasedBuilder(rateLimitRedisConnection)
                 .expirationAfterWrite(ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofSeconds(10)))
                 .build();

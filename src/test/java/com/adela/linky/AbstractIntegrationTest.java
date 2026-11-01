@@ -6,7 +6,7 @@ import com.adela.linky.entity.ShortUrl;
 import com.adela.linky.entity.User;
 import com.adela.linky.repository.RoleRepository;
 import com.adela.linky.repository.UserRepository;
-import com.adela.linky.security.jwt.JwtService;
+import com.adela.linky.security.jwt.JwtTokenProvider;
 import com.adela.linky.service.ShortUrlInsertService;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +49,7 @@ public abstract class AbstractIntegrationTest {
     protected PasswordEncoder passwordEncoder;
 
     @Autowired
-    protected JwtService jwtService;
+    protected JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     protected ShortUrlInsertService shortUrlInsertService;
@@ -101,7 +101,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected String bearer(User user) {
-        return "Bearer " + jwtService.generateAccessToken(AuthUser.from(user));
+        return "Bearer " + jwtTokenProvider.generateAccessToken(AuthUser.from(user));
     }
 
     protected ShortUrl createShortUrl(String shortKey, String longUrl, User owner) {

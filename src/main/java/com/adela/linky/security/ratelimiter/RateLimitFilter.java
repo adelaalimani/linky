@@ -1,18 +1,17 @@
 package com.adela.linky.security.ratelimiter;
 
+import com.adela.linky.security.AuthUser;
 import io.github.bucket4j.BucketConfiguration;
-import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -27,11 +26,13 @@ import java.util.stream.Stream;
 
 import static com.adela.linky.security.utils.SecurityUrls.*;
 
-@Slf4j
+/**
+ * Limits how many requests a user or IP can make, using token buckets stored in Redis.
+ * Over the limit returns 429.
+ */
 @Component
+@Slf4j
 public class RateLimitFilter extends OncePerRequestFilter {
-
-    private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
     private static final RequestMatcher SKIPPED_URLS = matcherFor(DOCS_URLS, ACTUATOR_URLS);
     private static final RequestMatcher AUTH_MATCHER = matcherFor(AUTH_URLS);
@@ -48,15 +49,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
         this.authBucketConfiguration = authBucketConfiguration;
     }
 
+    /**
+     * Swagger docs and actuator endpoints are not rate limited.
+     */
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         return SKIPPED_URLS.matches(request);
     }
 
+    /**
+     * Takes one token from the caller's bucket, auth requests use the stricter per-IP limit.
+     * Returns 429 when the bucket is empty, and lets the request through if Redis is unavailable.
+     */
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         boolean authRequest = AUTH_MATCHER.matches(request);
         String key = authRequest
@@ -66,41 +74,41 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 ? authBucketConfiguration
                 : defaultBucketConfiguration;
 
-        ConsumptionProbe probe;
+        boolean allowed;
         try {
-            probe = proxyManager.builder()
+            allowed = proxyManager.builder()
                     .build(key, () -> bucketConfiguration)
-                    .tryConsumeAndReturnRemaining(1);
+                    .tryConsume(1);
         } catch (Exception e) {
             log.error("Rate limiter unavailable, letting request through", e);
+            allowed = true;
+        }
+
+        if (allowed) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (probe.isConsumed()) {
-            response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        long retryAfterSeconds = (probe.getNanosToWaitForRefill() + NANOS_PER_SECOND - 1) / NANOS_PER_SECOND;
         log.warn("Rate limit exceeded for {}", key);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-        response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
         response.setContentType(MediaType.TEXT_PLAIN_VALUE);
         response.getWriter().write("Rate limit exceeded, please try again later");
     }
 
+    /**
+     * Logged-in users get a bucket per user id, everyone else a bucket per IP address.
+     */
     private String resolveRateLimitKey(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null
-                && authentication.isAuthenticated()
-                && !(authentication instanceof AnonymousAuthenticationToken)) {
-            return "ratelimit:user:" + authentication.getName();
+        if (authentication != null && authentication.getPrincipal() instanceof AuthUser user) {
+            return "ratelimit:user:" + user.id();
         }
         return "ratelimit:ip:" + request.getRemoteAddr();
     }
 
+    /**
+     * Combines URL patterns into one matcher.
+     */
     private static RequestMatcher matcherFor(String[]... urlGroups) {
         return new OrRequestMatcher(
                 Stream.of(urlGroups)

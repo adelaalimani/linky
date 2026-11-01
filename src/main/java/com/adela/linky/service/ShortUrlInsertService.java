@@ -9,6 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Saves a new short URL in its own transaction. It's a separate class so that a duplicate key only
+ * rolls back this one attempt, and ShortUrlService can retry with a new key.
+ */
 @Service
 @Slf4j
 public class ShortUrlInsertService {
@@ -21,6 +25,9 @@ public class ShortUrlInsertService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Inserts the short URL for the user.
+     */
     @Transactional
     public ShortUrl insert(String shortKey, String longUrl, Long userId) {
         User existingUser = userRepository.findById(userId)

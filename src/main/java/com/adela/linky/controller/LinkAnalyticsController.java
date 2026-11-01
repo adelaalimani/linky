@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Endpoints for viewing click statistics of short URLs.
+ */
 @RestController
 @RequestMapping("/api/v1/links")
 public class LinkAnalyticsController {
@@ -20,11 +23,13 @@ public class LinkAnalyticsController {
         this.linkAnalyticsService = linkAnalyticsService;
     }
 
+    /**
+     * Returns total and daily clicks for a link. Customers can only see their own links, admins can see any.
+     */
     @GetMapping("/{shortKey}/analytics")
     public ResponseEntity<LinkAnalyticsResponse> getAnalytics(
             @PathVariable String shortKey,
             @AuthenticationPrincipal AuthUser user) {
-        return ResponseEntity.ok(linkAnalyticsService.getAnalytics(shortKey, user)
-        );
+        return ResponseEntity.ok(linkAnalyticsService.getAnalytics(shortKey, user));
     }
 }

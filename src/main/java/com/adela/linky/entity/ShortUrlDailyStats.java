@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * Represents the number of clicks a short URL received on a given day.
+ */
 @Entity
 @Table(
         name = "short_url_daily_stats",

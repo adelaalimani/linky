@@ -4,9 +4,13 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 
+/**
+ * Represents a short URL created by a user, with its long URL and click statistics.
+ */
 @Entity
 @Table(
         name = "short_urls",
@@ -29,6 +33,7 @@ public class ShortUrl {
     @Column(name = "long_url", nullable = false, length = 2048)
     private String longUrl;
 
+    @Setter
     @Column(nullable = false)
     private boolean active = true;
 
@@ -49,10 +54,6 @@ public class ShortUrl {
         this.shortKey = shortKey;
         this.longUrl = longUrl;
         this.user = user;
-    }
-
-    public void deactivate() {
-        this.active = false;
     }
 
     @PrePersist

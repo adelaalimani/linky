@@ -14,6 +14,9 @@ public class ShortUrlMapper {
         this.baseUrl = baseUrl;
     }
 
+    /**
+     * Converts a ShortUrl to its API response, building the full short URL from linky.base-url.
+     */
     public ShortUrlResponse toResponse(ShortUrl shortUrl) {
         return new ShortUrlResponse(
                 shortUrl.getShortKey(),

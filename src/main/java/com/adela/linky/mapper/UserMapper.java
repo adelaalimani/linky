@@ -14,6 +14,9 @@ public class UserMapper {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Builds a new, enabled user from the registration request with the password hashed.
+     */
     public User toUser(RegistrationRequest request) {
         return User.builder()
                 .firstName(request.firstName())

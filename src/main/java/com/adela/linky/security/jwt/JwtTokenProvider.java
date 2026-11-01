@@ -14,8 +14,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Creates and verifies JWT access tokens, signed with the RSA private key and checked with the public key.
+ */
 @Component
-public class JwtService {
+public class JwtTokenProvider {
 
     private static final String ROLES = "roles";
     private static final String USER_ID = "user_id";
@@ -24,7 +27,10 @@ public class JwtService {
     private final PublicKey publicKey;
     private final long accessTokenExpiration;
 
-    public JwtService(
+    /**
+     * Loads the keys from the JWT_PRIVATE_KEY / JWT_PUBLIC_KEY.
+     */
+    public JwtTokenProvider(
             @Value("${JWT_PRIVATE_KEY:}") String privateKeyValue,
             @Value("${JWT_PUBLIC_KEY:}") String publicKeyValue,
             @Value("${app.security.jwt.access-token-expiration}") long accessTokenExpiration
@@ -34,6 +40,9 @@ public class JwtService {
         this.accessTokenExpiration = accessTokenExpiration;
     }
 
+    /**
+     * Creates a signed token with the user's email, id and roles, valid for the configured expiration time.
+     */
     public String generateAccessToken(AuthUser user) {
         Map<String, Object> claims = Map.of(
                 USER_ID, user.id(),
@@ -63,6 +72,9 @@ public class JwtService {
         return new AuthUser(userId.longValue(), claims.getSubject(), roleNames);
     }
 
+    /**
+     * Checks the signature and expiry and returns the claims".
+     */
     private Claims extractClaims(String token) {
         try {
             return Jwts.parser()

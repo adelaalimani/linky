@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 
+/**
+ * Swagger/OpenAPI docs setup: API title and description, plus the JWT "Authorize" button in Swagger UI.
+ */
 @OpenAPIDefinition(
         info = @Info(
                 title = "Linky API",

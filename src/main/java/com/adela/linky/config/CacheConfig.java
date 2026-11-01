@@ -11,10 +11,17 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
+/**
+ * Turns on Spring caching (@Cacheable) and stores the cache in Redis.
+ */
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
+    /**
+     * Creates the "shortUrls" cache, which maps a short key to its long URL so redirects skip Postgres.
+     * Entries expire after 30 minutes and are stored as plain text.
+     */
     @Bean
     public RedisCacheManager cacheManager(
             RedisConnectionFactory connectionFactory) {
