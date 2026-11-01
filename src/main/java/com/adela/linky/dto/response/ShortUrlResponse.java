@@ -1,5 +1,7 @@
 package com.adela.linky.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.Instant;
 
 public record ShortUrlResponse(
@@ -8,6 +10,7 @@ public record ShortUrlResponse(
         String longUrl,
         boolean active,
         long usedCount,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         Instant lastAccessedAt,
         Instant createdAt
 ) {
