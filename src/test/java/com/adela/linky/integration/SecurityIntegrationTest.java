@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,7 +29,8 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void shouldRejectUnauthenticatedRequests() throws Exception {
         mockMvc.perform(get("/api/v1/short-urls"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Seems that you are not authenticated. Please log in and try again."));
 
         mockMvc.perform(post("/api/v1/short-urls")
                         .contentType(MediaType.APPLICATION_JSON)
