@@ -52,30 +52,30 @@ services:
       retries: 10
     restart: unless-stopped
 
-  linky:
-    image: adelaalimani97/linky:${LINKY_IMAGE_TAG:-latest}
-    container_name: linky-app
-
-    ports:
-      - "8080:8080"
-
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-linky}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-linky}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set}
-
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_USERNAME: ${REDIS_USERNAME:?REDIS_USERNAME is not set}
-      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is not set}
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-    restart: unless-stopped
+#  linky:
+#    image: adelaalimani97/linky:${LINKY_IMAGE_TAG:-latest}
+#    container_name: linky-app
+#
+#    ports:
+#      - "8080:8080"
+#
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-linky}
+#      SPRING_DATASOURCE_USERNAME: ${DB_USER:-linky}
+#      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set}
+#
+#      SPRING_DATA_REDIS_HOST: redis
+#      SPRING_DATA_REDIS_PORT: 6379
+#      SPRING_DATA_REDIS_USERNAME: ${REDIS_USERNAME:?REDIS_USERNAME is not set}
+#      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is not set}
+#
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#
+#    restart: unless-stopped
 
 volumes:
   linky-pgdata:
