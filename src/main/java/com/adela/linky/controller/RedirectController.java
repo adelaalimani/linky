@@ -1,5 +1,6 @@
 package com.adela.linky.controller;
 
+import com.adela.linky.security.utils.SecurityUrls;
 import com.adela.linky.service.ShortUrlService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class RedirectController {
         this.shortUrlService = shortUrlService;
     }
 
-    @GetMapping("/{shortKey:[0-9A-Za-z]{7}}")
+    @GetMapping(SecurityUrls.REDIRECT_URL)
     public ResponseEntity<Void> redirect(@PathVariable String shortKey) {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(shortUrlService.resolve(shortKey)))

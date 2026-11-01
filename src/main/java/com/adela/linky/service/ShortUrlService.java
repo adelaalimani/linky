@@ -4,6 +4,7 @@ import com.adela.linky.dto.request.CreateShortUrlRequest;
 import com.adela.linky.dto.response.ShortUrlResponse;
 import com.adela.linky.entity.ShortUrl;
 import com.adela.linky.security.AuthUser;
+import com.adela.linky.exception.BadRequestException;
 import com.adela.linky.exception.ConflictException;
 import com.adela.linky.exception.ForbiddenException;
 import com.adela.linky.exception.NotFoundException;
@@ -77,6 +78,9 @@ public class ShortUrlService {
     }
 
     public String resolve(String shortKey) {
+        if (shortKey.length() != KEY_LENGTH) {
+            throw new BadRequestException("Short URL key is not valid");
+        }
         String longUrl = shortUrlCacheService.findLongUrl(shortKey);
         linkAnalyticsService.recordClick(shortKey);
         return longUrl;

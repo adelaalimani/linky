@@ -20,5 +20,6 @@ public final class SecurityUrls {
             "/actuator/info"
     };
 
-    public static final String REDIRECT_URL = "/{shortKey:[0-9A-Za-z]{7}}";
+    // Any length is matched so a wrong-length key gets a clear 400 instead of falling through to static resources
+    public static final String REDIRECT_URL = "/{shortKey:[0-9A-Za-z]+}";
 }
