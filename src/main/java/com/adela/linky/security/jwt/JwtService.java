@@ -1,6 +1,7 @@
 package com.adela.linky.security.jwt;
 
 import com.adela.linky.exception.BadRequestException;
+import com.adela.linky.security.AuthUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -10,61 +11,56 @@ import org.springframework.stereotype.Component;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Component
 public class JwtService {
 
-    private static final String TOKEN_TYPE = "token_type";
-    private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
-    private static final String REFRESH_TOKEN = "REFRESH_TOKEN";
+    private static final String ROLES = "roles";
+    private static final String USER_ID = "user_id";
 
     private final PrivateKey privateKey;
     private final PublicKey publicKey;
     private final long accessTokenExpiration;
-    private final long refreshTokenExpiration;
 
     public JwtService(
             @Value("${JWT_PRIVATE_KEY:}") String privateKeyValue,
             @Value("${JWT_PUBLIC_KEY:}") String publicKeyValue,
-            @Value("${app.security.jwt.access-token-expiration}") long accessTokenExpiration,
-            @Value("${app.security.jwt.refresh-token-expiration}") long refreshTokenExpiration
+            @Value("${app.security.jwt.access-token-expiration}") long accessTokenExpiration
     ) throws Exception {
         this.privateKey = KeyUtils.loadPrivateKey("keys/private_key.pem", privateKeyValue);
         this.publicKey = KeyUtils.loadPublicKey("keys/public_key.pem", publicKeyValue);
         this.accessTokenExpiration = accessTokenExpiration;
-        this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
-    public String generateAccessToken(String username) {
-        Map<String, Object> claims = Map.of(TOKEN_TYPE, ACCESS_TOKEN);
-        return buildToken(username, claims, this.accessTokenExpiration);
-    }
-
-    public String generateRefreshToken(String username) {
-        Map<String, Object> claims = Map.of(TOKEN_TYPE, REFRESH_TOKEN);
-        return buildToken(username, claims, this.refreshTokenExpiration);
-    }
-
-    private String buildToken(String username, Map<String, Object> claims, long tokenExpiration) {
+    public String generateAccessToken(AuthUser user) {
+        Map<String, Object> claims = Map.of(
+                USER_ID, user.id(),
+                ROLES, user.roles());
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .claims(claims)
-                .subject(username)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + tokenExpiration))
+                .subject(user.email())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + this.accessTokenExpiration))
                 .signWith(privateKey)
                 .compact();
     }
 
-    public boolean isTokenValid(String token, String expectedUsername) {
-        return isTokenValid(token, expectedUsername, ACCESS_TOKEN);
-    }
-
-    private boolean isTokenValid(String token, String expectedUsername, String expectedType) {
+    /**
+     * Verifies the signature and expiry, then builds the user from the claims.
+     * Roles come from the token, so role changes apply only after the user logs in again.
+     */
+    public AuthUser parseAccessToken(String token) {
         Claims claims = extractClaims(token);
-        return claims.getSubject().equals(expectedUsername)
-                && expectedType.equals(claims.get(TOKEN_TYPE))
-                && claims.getExpiration().after(new Date());
+        if (claims.getSubject() == null
+                || !(claims.get(USER_ID) instanceof Number userId)
+                || !(claims.get(ROLES) instanceof List<?> roles)) {
+            throw new BadRequestException("Invalid JWT token");
+        }
+        List<String> roleNames = roles.stream().map(String::valueOf).toList();
+        return new AuthUser(userId.longValue(), claims.getSubject(), roleNames);
     }
 
     private Claims extractClaims(String token) {
@@ -77,10 +73,6 @@ public class JwtService {
         } catch (JwtException e) {
             throw new BadRequestException("Invalid JWT token");
         }
-    }
-
-    public String extractUsername(String token) {
-        return extractClaims(token).getSubject();
     }
 
 }

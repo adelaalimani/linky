@@ -1,5 +1,6 @@
 package com.adela.linky;
 
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.entity.Role;
 import com.adela.linky.entity.ShortUrl;
 import com.adela.linky.entity.User;
@@ -100,7 +101,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected String bearer(User user) {
-        return "Bearer " + jwtService.generateAccessToken(user.getUsername());
+        return "Bearer " + jwtService.generateAccessToken(AuthUser.from(user));
     }
 
     protected ShortUrl createShortUrl(String shortKey, String longUrl, User owner) {

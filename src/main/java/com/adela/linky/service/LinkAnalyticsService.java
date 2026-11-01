@@ -3,7 +3,7 @@ package com.adela.linky.service;
 import com.adela.linky.dto.response.DailyClicksResponse;
 import com.adela.linky.dto.response.LinkAnalyticsResponse;
 import com.adela.linky.entity.ShortUrl;
-import com.adela.linky.entity.User;
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.exception.ForbiddenException;
 import com.adela.linky.exception.NotFoundException;
 import com.adela.linky.repository.ShortUrlDailyStatsRepository;
@@ -48,7 +48,6 @@ public class LinkAnalyticsService {
         String redisKey = DAILY_PREFIX + shortKey;
 
         redisTemplate.opsForHash().increment(redisKey, today, 1L);
-
         redisTemplate.opsForHash().put(redisKey, today + ":lastAccessedAt", String.valueOf(now.toEpochMilli()));
     }
 
@@ -141,18 +140,15 @@ public class LinkAnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public LinkAnalyticsResponse getAnalytics(String shortKey, User user) {
+    public LinkAnalyticsResponse getAnalytics(String shortKey, AuthUser user) {
 
         ShortUrl shortUrl = shortUrlRepository.findByShortKey(shortKey).orElseThrow(() -> new NotFoundException("Short URL not found"));
 
-        boolean isAdmin = user.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
-
-        if (!isAdmin && !shortUrl.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You cannot view analytics for another user's link");
+        if (!user.isAdmin() && !shortUrl.getUser().getId().equals(user.id())) {
+            throw new ForbiddenException("You are not authorized for this action");
         }
 
         List<DailyClicksResponse> dailyClicks = dailyStatsRepository.findByShortUrlIdOrderByStatDateDesc(shortUrl.getId()).stream().map(stats -> new DailyClicksResponse(stats.getStatDate(), stats.getClicks())).toList();
-
         return new LinkAnalyticsResponse(shortUrl.getShortKey(), shortUrl.getUsedCount(), dailyClicks);
     }
 }

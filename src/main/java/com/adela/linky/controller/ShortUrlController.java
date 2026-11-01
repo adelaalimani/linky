@@ -2,7 +2,7 @@ package com.adela.linky.controller;
 
 import com.adela.linky.dto.request.CreateShortUrlRequest;
 import com.adela.linky.dto.response.ShortUrlResponse;
-import com.adela.linky.entity.User;
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.service.ShortUrlService;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
@@ -27,13 +27,13 @@ public class ShortUrlController {
 
     @PostMapping
     public ResponseEntity<ShortUrlResponse> create(@Valid @RequestBody CreateShortUrlRequest request,
-                                                   @AuthenticationPrincipal User user) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(shortUrlService.create(request, user.getId()));
+                                                   @AuthenticationPrincipal AuthUser user) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(shortUrlService.create(request, user.id()));
     }
 
     @GetMapping
     public ResponseEntity<Page<ShortUrlResponse>> getAll(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal AuthUser user,
             @ParameterObject
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
@@ -41,7 +41,7 @@ public class ShortUrlController {
     }
 
     @PatchMapping("/{shortKey}/deactivate")
-    public ResponseEntity<Void> deactivate(@PathVariable String shortKey, @AuthenticationPrincipal User user) {
+    public ResponseEntity<Void> deactivate(@PathVariable String shortKey, @AuthenticationPrincipal AuthUser user) {
         shortUrlService.deactivate(shortKey, user);
         return ResponseEntity.noContent().build();
     }

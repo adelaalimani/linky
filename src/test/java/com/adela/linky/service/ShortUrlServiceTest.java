@@ -1,5 +1,6 @@
 package com.adela.linky.service;
 
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.dto.request.CreateShortUrlRequest;
 import com.adela.linky.dto.response.ShortUrlResponse;
 import com.adela.linky.entity.Role;
@@ -127,7 +128,7 @@ class ShortUrlServiceTest {
         when(shortUrlRepository.findByUserId(owner.getId(), pageable))
                 .thenReturn(new PageImpl<>(List.of(ownLink), pageable, 1));
 
-        Page<ShortUrlResponse> result = shortUrlService.getAll(owner, pageable);
+        Page<ShortUrlResponse> result = shortUrlService.getAll(AuthUser.from(owner), pageable);
 
         assertThat(result.getContent())
                 .extracting(ShortUrlResponse::shortKey)
@@ -144,7 +145,7 @@ class ShortUrlServiceTest {
                 shortUrl(11L, "Xyz9876", "https://example.com/two", otherUser));
         when(shortUrlRepository.findAll(pageable)).thenReturn(new PageImpl<>(allLinks, pageable, 2));
 
-        Page<ShortUrlResponse> result = shortUrlService.getAll(admin, pageable);
+        Page<ShortUrlResponse> result = shortUrlService.getAll(AuthUser.from(admin), pageable);
 
         assertThat(result.getTotalElements()).isEqualTo(2);
         assertThat(result.getContent())
@@ -160,7 +161,7 @@ class ShortUrlServiceTest {
         when(shortUrlRepository.findByShortKey("Abc1234")).thenReturn(Optional.of(link));
         when(cacheManager.getCache("shortUrls")).thenReturn(cache);
 
-        shortUrlService.deactivate("Abc1234", owner);
+        shortUrlService.deactivate("Abc1234", AuthUser.from(owner));
 
         assertThat(link.isActive()).isFalse();
         // The cache must only be evicted once the transaction has committed
@@ -178,7 +179,7 @@ class ShortUrlServiceTest {
         ShortUrl link = shortUrl(10L, "Abc1234", "https://example.com", owner);
         when(shortUrlRepository.findByShortKey("Abc1234")).thenReturn(Optional.of(link));
 
-        assertThatThrownBy(() -> shortUrlService.deactivate("Abc1234", otherUser))
+        assertThatThrownBy(() -> shortUrlService.deactivate("Abc1234", AuthUser.from(otherUser)))
                 .isInstanceOf(ForbiddenException.class);
 
         assertThat(link.isActive()).isTrue();

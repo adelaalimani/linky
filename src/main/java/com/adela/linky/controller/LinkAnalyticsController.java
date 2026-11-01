@@ -1,7 +1,7 @@
 package com.adela.linky.controller;
 
 import com.adela.linky.dto.response.LinkAnalyticsResponse;
-import com.adela.linky.entity.User;
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.service.LinkAnalyticsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +23,7 @@ public class LinkAnalyticsController {
     @GetMapping("/{shortKey}/analytics")
     public ResponseEntity<LinkAnalyticsResponse> getAnalytics(
             @PathVariable String shortKey,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal AuthUser user) {
         return ResponseEntity.ok(linkAnalyticsService.getAnalytics(shortKey, user)
         );
     }

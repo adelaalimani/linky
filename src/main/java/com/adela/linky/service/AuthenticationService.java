@@ -9,6 +9,7 @@ import com.adela.linky.exception.BadRequestException;
 import com.adela.linky.mapper.UserMapper;
 import com.adela.linky.repository.RoleRepository;
 import com.adela.linky.repository.UserRepository;
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.security.jwt.JwtService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,9 +46,8 @@ public class AuthenticationService {
                 )
         );
         User user = (User) authentication.getPrincipal();
-        String token = jwtService.generateAccessToken(user.getUsername());
-        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
-        return new AuthenticationResponse(token, refreshToken);
+        String token = jwtService.generateAccessToken(AuthUser.from(user));
+        return new AuthenticationResponse(token);
     }
 
     @Transactional

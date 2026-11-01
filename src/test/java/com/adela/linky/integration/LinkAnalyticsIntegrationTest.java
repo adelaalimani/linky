@@ -1,5 +1,6 @@
 package com.adela.linky.integration;
 
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.AbstractIntegrationTest;
 import com.adela.linky.dto.response.DailyClicksResponse;
 import com.adela.linky.dto.response.LinkAnalyticsResponse;
@@ -104,7 +105,7 @@ class LinkAnalyticsIntegrationTest extends AbstractIntegrationTest {
         assertThat(dailyClicks(today)).isEqualTo(8L);
         assertThat(usedCount()).isEqualTo(10L);
 
-        LinkAnalyticsResponse analytics = linkAnalyticsService.getAnalytics(SHORT_KEY, owner);
+        LinkAnalyticsResponse analytics = linkAnalyticsService.getAnalytics(SHORT_KEY, AuthUser.from(owner));
         assertThat(analytics.totalClicks()).isEqualTo(10L);
         assertThat(analytics.dailyClicks()).containsExactly(
                 new DailyClicksResponse(today, 8),

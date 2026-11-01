@@ -3,7 +3,7 @@ package com.adela.linky.service;
 import com.adela.linky.dto.request.CreateShortUrlRequest;
 import com.adela.linky.dto.response.ShortUrlResponse;
 import com.adela.linky.entity.ShortUrl;
-import com.adela.linky.entity.User;
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.exception.ConflictException;
 import com.adela.linky.exception.ForbiddenException;
 import com.adela.linky.exception.NotFoundException;
@@ -68,11 +68,11 @@ public class ShortUrlService {
 
 
     @Transactional(readOnly = true)
-    public Page<ShortUrlResponse> getAll(User user, Pageable pageable) {
+    public Page<ShortUrlResponse> getAll(AuthUser user, Pageable pageable) {
 
-        Page<ShortUrl> shortUrls = isAdmin(user)
+        Page<ShortUrl> shortUrls = user.isAdmin()
                 ? shortUrlRepository.findAll(pageable)
-                : shortUrlRepository.findByUserId(user.getId(), pageable);
+                : shortUrlRepository.findByUserId(user.id(), pageable);
         return shortUrls.map(shortUrlMapper::toResponse);
     }
 
@@ -83,11 +83,11 @@ public class ShortUrlService {
     }
 
     @Transactional
-    public void deactivate(String shortKey, User user) {
+    public void deactivate(String shortKey, AuthUser user) {
         ShortUrl shortUrl = shortUrlRepository.findByShortKey(shortKey)
                 .orElseThrow(() -> new NotFoundException("Short url " + shortKey + " not found"));
 
-        if (!isAdmin(user) && !shortUrl.getUser().getId().equals(user.getId())) {
+        if (!user.isAdmin() && !shortUrl.getUser().getId().equals(user.id())) {
             throw new ForbiddenException(
                     "You are not authorized to deactivate this short URL"
             );
@@ -105,11 +105,6 @@ public class ShortUrlService {
                     }
                 }
         );
-    }
-
-    private boolean isAdmin(User user) {
-        return user.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private static String randomKey() {

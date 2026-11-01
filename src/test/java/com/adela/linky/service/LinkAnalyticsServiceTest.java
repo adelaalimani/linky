@@ -1,5 +1,6 @@
 package com.adela.linky.service;
 
+import com.adela.linky.security.AuthUser;
 import com.adela.linky.dto.response.DailyClicksResponse;
 import com.adela.linky.dto.response.LinkAnalyticsResponse;
 import com.adela.linky.entity.Role;
@@ -63,7 +64,7 @@ class LinkAnalyticsServiceTest {
                 dailyStats(link, today, 4),
                 dailyStats(link, today.minusDays(1), 3)));
 
-        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", owner);
+        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(owner));
 
         assertThat(response.shortKey()).isEqualTo("Abc1234");
         assertThat(response.totalClicks()).isEqualTo(7);
@@ -80,7 +81,7 @@ class LinkAnalyticsServiceTest {
         when(dailyStatsRepository.findByShortUrlIdOrderByStatDateDesc(10L))
                 .thenReturn(List.of(dailyStats(link, today, 2)));
 
-        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", admin);
+        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(admin));
 
         assertThat(response.shortKey()).isEqualTo("Abc1234");
         assertThat(response.totalClicks()).isEqualTo(2);
@@ -92,7 +93,7 @@ class LinkAnalyticsServiceTest {
         ShortUrl link = shortUrl(10L, "Abc1234", owner, 2);
         when(shortUrlRepository.findByShortKey("Abc1234")).thenReturn(Optional.of(link));
 
-        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Abc1234", otherUser))
+        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(otherUser)))
                 .isInstanceOf(ForbiddenException.class);
 
         verify(dailyStatsRepository, never()).findByShortUrlIdOrderByStatDateDesc(anyLong());
@@ -102,7 +103,7 @@ class LinkAnalyticsServiceTest {
     void shouldThrowNotFoundForNonexistentLink() {
         when(shortUrlRepository.findByShortKey("Missing")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Missing", admin))
+        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Missing", AuthUser.from(admin)))
                 .isInstanceOf(NotFoundException.class);
 
         verify(dailyStatsRepository, never()).findByShortUrlIdOrderByStatDateDesc(anyLong());

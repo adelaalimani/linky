@@ -36,6 +36,20 @@ spring:
   threads:
     virtual:
       enabled: true
+linky:
+  base-url: ${LINKY_BASE_URL:http://localhost:8080}
+
+app:
+  security:
+    jwt:
+      access-token-expiration: 86400000 # 1 day
+  rate-limit:
+    default: # per user, or per IP when not logged in
+      capacity: 60 # requests allowed per refill period
+      refill-period: 1m
+    auth: # /api/v1/auth/**, per IP
+      capacity: 5
+      refill-period: 1m
 
 server:
   forward-headers-strategy: framework
@@ -50,19 +64,3 @@ management:
     health:
       probes:
         enabled: true
-
-linky:
-  base-url: ${LINKY_BASE_URL:http://localhost:8080}
-
-app:
-  security:
-    jwt:
-      access-token-expiration: 86400000 # 1 day
-      refresh-token-expiration: 604800000
-  rate-limit:
-    default: # per user, or per IP when not logged in
-      capacity: 60 # requests allowed per refill period
-      refill-period: 1m
-    auth: # /api/v1/auth/**, per IP
-      capacity: 5
-      refill-period: 1m
