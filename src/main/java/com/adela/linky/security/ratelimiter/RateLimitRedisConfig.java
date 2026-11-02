@@ -19,7 +19,7 @@ import java.time.Duration;
  * Sets up Bucket4j to keep rate-limit buckets in Redis, so limits are shared and survive restarts.
  */
 @Configuration
-public class Bucket4jConfig {
+public class RateLimitRedisConfig {
 
     /**
      * Separate Lettuce Redis client for Bucket4j, using the same host and credentials as Spring Data Redis.

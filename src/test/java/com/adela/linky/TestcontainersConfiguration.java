@@ -26,7 +26,7 @@ public class TestcontainersConfiguration {
 				.withExposedPorts(REDIS_PORT);
 	}
 
-	// Bucket4jConfig reads the raw spring.data.redis.* properties, which @ServiceConnection doesn't populate
+	// RateLimitRedisConfig reads the raw spring.data.redis.* properties, which @ServiceConnection doesn't populate
 	@Bean
 	DynamicPropertyRegistrar redisProperties(GenericContainer<?> redisContainer) {
 		return registry -> {

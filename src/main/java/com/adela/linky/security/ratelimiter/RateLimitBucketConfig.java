@@ -11,7 +11,7 @@ import java.time.Duration;
  * Defines the rate limits from app.rate-limit in application.yaml.
  */
 @Configuration
-public class RateLimitConfig {
+public class RateLimitBucketConfig {
 
     /**
      * Limit for all endpoints except auth: 10 requests per minute per user, or per IP when not logged in.
