@@ -45,7 +45,7 @@ app:
       access-token-expiration: 86400000 # 1 day
   rate-limit:
     default: # per user, or per IP when not logged in
-      capacity: 60 # requests allowed per refill period
+      capacity: 10 # requests allowed per refill period
       refill-period: 1m
     auth: # /api/v1/auth/**, per IP
       capacity: 5

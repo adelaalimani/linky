@@ -14,7 +14,7 @@ import java.time.Duration;
 public class RateLimitConfig {
 
     /**
-     * Limit for all endpoints except auth: 60 requests per minute per user, or per IP when not logged in.
+     * Limit for all endpoints except auth: 10 requests per minute per user, or per IP when not logged in.
      */
     @Bean
     public BucketConfiguration defaultBucketConfiguration(
