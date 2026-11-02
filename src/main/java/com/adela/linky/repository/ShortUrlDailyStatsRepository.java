@@ -27,5 +27,5 @@ public interface ShortUrlDailyStatsRepository extends JpaRepository<ShortUrlDail
             """, nativeQuery = true)
     int upsertDailyClicks(@Param("shortUrlId") Long shortUrlId, @Param("date") LocalDate date, @Param("clicks") long clicks);
 
-    List<ShortUrlDailyStats> findByShortUrlIdOrderByStatDateDesc(Long shortUrlId);
+    List<ShortUrlDailyStats> findByShortUrlIdAndStatDateBetweenOrderByStatDateDesc(Long shortUrlId, LocalDate from, LocalDate to);
 }

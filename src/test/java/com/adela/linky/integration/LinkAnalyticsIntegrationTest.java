@@ -105,7 +105,7 @@ class LinkAnalyticsIntegrationTest extends AbstractIntegrationTest {
         assertThat(dailyClicks(today)).isEqualTo(8L);
         assertThat(usedCount()).isEqualTo(10L);
 
-        LinkAnalyticsResponse analytics = linkAnalyticsService.getAnalytics(SHORT_KEY, AuthUser.from(owner));
+        LinkAnalyticsResponse analytics = linkAnalyticsService.getAnalytics(SHORT_KEY, AuthUser.from(owner), null, null);
         assertThat(analytics.totalClicks()).isEqualTo(10L);
         assertThat(analytics.dailyClicks()).containsExactly(
                 new DailyClicksResponse(today, 8),

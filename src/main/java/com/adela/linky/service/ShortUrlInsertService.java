@@ -2,7 +2,6 @@ package com.adela.linky.service;
 
 import com.adela.linky.entity.ShortUrl;
 import com.adela.linky.entity.User;
-import com.adela.linky.exception.NotFoundException;
 import com.adela.linky.repository.ShortUrlRepository;
 import com.adela.linky.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +29,9 @@ public class ShortUrlInsertService {
      */
     @Transactional
     public ShortUrl insert(String shortKey, String longUrl, Long userId) {
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User " + userId + " not found"));
+        User user = userRepository.getReferenceById(userId);
         return shortUrlRepository.saveAndFlush(
-                new ShortUrl(shortKey, longUrl, existingUser)
+                new ShortUrl(shortKey, longUrl, user)
         );
     }
 }

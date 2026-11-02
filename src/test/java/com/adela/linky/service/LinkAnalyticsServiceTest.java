@@ -7,6 +7,7 @@ import com.adela.linky.entity.Role;
 import com.adela.linky.entity.ShortUrl;
 import com.adela.linky.entity.ShortUrlDailyStats;
 import com.adela.linky.entity.User;
+import com.adela.linky.exception.BadRequestException;
 import com.adela.linky.exception.ForbiddenException;
 import com.adela.linky.exception.NotFoundException;
 import com.adela.linky.repository.ShortUrlDailyStatsRepository;
@@ -27,6 +28,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -60,11 +62,11 @@ class LinkAnalyticsServiceTest {
         ShortUrl link = shortUrl(10L, "Abc1234", owner, 7);
         LocalDate today = LocalDate.of(2026, 10, 30);
         when(shortUrlRepository.findByShortKey("Abc1234")).thenReturn(Optional.of(link));
-        when(dailyStatsRepository.findByShortUrlIdOrderByStatDateDesc(10L)).thenReturn(List.of(
+        when(dailyStatsRepository.findByShortUrlIdAndStatDateBetweenOrderByStatDateDesc(10L, today.minusDays(29), today)).thenReturn(List.of(
                 dailyStats(link, today, 4),
                 dailyStats(link, today.minusDays(1), 3)));
 
-        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(owner));
+        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(owner), null, today);
 
         assertThat(response.shortKey()).isEqualTo("Abc1234");
         assertThat(response.totalClicks()).isEqualTo(7);
@@ -78,10 +80,10 @@ class LinkAnalyticsServiceTest {
         ShortUrl link = shortUrl(10L, "Abc1234", owner, 2);
         LocalDate today = LocalDate.of(2026, 10, 30);
         when(shortUrlRepository.findByShortKey("Abc1234")).thenReturn(Optional.of(link));
-        when(dailyStatsRepository.findByShortUrlIdOrderByStatDateDesc(10L))
+        when(dailyStatsRepository.findByShortUrlIdAndStatDateBetweenOrderByStatDateDesc(10L, today.minusDays(29), today))
                 .thenReturn(List.of(dailyStats(link, today, 2)));
 
-        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(admin));
+        LinkAnalyticsResponse response = linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(admin), null, today);
 
         assertThat(response.shortKey()).isEqualTo("Abc1234");
         assertThat(response.totalClicks()).isEqualTo(2);
@@ -93,20 +95,36 @@ class LinkAnalyticsServiceTest {
         ShortUrl link = shortUrl(10L, "Abc1234", owner, 2);
         when(shortUrlRepository.findByShortKey("Abc1234")).thenReturn(Optional.of(link));
 
-        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(otherUser)))
+        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(otherUser), null, null))
                 .isInstanceOf(ForbiddenException.class);
 
-        verify(dailyStatsRepository, never()).findByShortUrlIdOrderByStatDateDesc(anyLong());
+        verify(dailyStatsRepository, never()).findByShortUrlIdAndStatDateBetweenOrderByStatDateDesc(anyLong(), any(), any());
     }
 
     @Test
     void shouldThrowNotFoundForNonexistentLink() {
         when(shortUrlRepository.findByShortKey("Missing")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Missing", AuthUser.from(admin)))
+        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Missing", AuthUser.from(admin), null, null))
                 .isInstanceOf(NotFoundException.class);
 
-        verify(dailyStatsRepository, never()).findByShortUrlIdOrderByStatDateDesc(anyLong());
+        verify(dailyStatsRepository, never()).findByShortUrlIdAndStatDateBetweenOrderByStatDateDesc(anyLong(), any(), any());
+    }
+
+    @Test
+    void shouldRejectFromAfterTo() {
+        LocalDate today = LocalDate.of(2026, 10, 30);
+
+        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(owner), today, today.minusDays(1)))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void shouldRejectRangeLongerThan365Days() {
+        LocalDate today = LocalDate.of(2026, 10, 30);
+
+        assertThatThrownBy(() -> linkAnalyticsService.getAnalytics("Abc1234", AuthUser.from(owner), today.minusDays(365), today))
+                .isInstanceOf(BadRequestException.class);
     }
 
     private static User user(Long id, String roleName) {

@@ -4,6 +4,7 @@ import com.adela.linky.dto.response.DailyClicksResponse;
 import com.adela.linky.dto.response.LinkAnalyticsResponse;
 import com.adela.linky.entity.ShortUrl;
 import com.adela.linky.security.AuthUser;
+import com.adela.linky.exception.BadRequestException;
 import com.adela.linky.exception.ForbiddenException;
 import com.adela.linky.exception.NotFoundException;
 import com.adela.linky.repository.ShortUrlDailyStatsRepository;
@@ -18,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +39,8 @@ public class LinkAnalyticsService {
 
     private static final String DAILY_PREFIX = "daily:";
     private static final String PROCESSING_PREFIX = "daily-processing:";
+    private static final int DEFAULT_RANGE_DAYS = 30;
+    private static final int MAX_RANGE_DAYS = 365;
 
     public LinkAnalyticsService(StringRedisTemplate redisTemplate, ShortUrlRepository shortUrlRepository, ShortUrlDailyStatsRepository dailyStatsRepository, TransactionTemplate transactionTemplate) {
         this.redisTemplate = redisTemplate;
@@ -146,10 +150,20 @@ public class LinkAnalyticsService {
     }
 
     /**
-     * Returns total and daily clicks for a link, only its owner or an admin may see them.
+     * Returns total clicks and the daily clicks between from and to (default: the last 30 days, at most 365 days).
+     * Only the link's owner or an admin may see them.
      */
     @Transactional(readOnly = true)
-    public LinkAnalyticsResponse getAnalytics(String shortKey, AuthUser user) {
+    public LinkAnalyticsResponse getAnalytics(String shortKey, AuthUser user, LocalDate from, LocalDate to) {
+        LocalDate end = to != null ? to : LocalDate.now(ZoneOffset.UTC);
+        LocalDate start = from != null ? from : end.minusDays(DEFAULT_RANGE_DAYS - 1);
+        if (start.isAfter(end)) {
+            throw new BadRequestException("from must not be after to");
+        }
+        if (ChronoUnit.DAYS.between(start, end) >= MAX_RANGE_DAYS) {
+            throw new BadRequestException("Date range can be at most " + MAX_RANGE_DAYS + " days");
+        }
+
         ShortUrl shortUrl = shortUrlRepository
                 .findByShortKey(shortKey)
                 .orElseThrow(() -> new NotFoundException("Short URL not found"));
@@ -158,7 +172,7 @@ public class LinkAnalyticsService {
             throw new ForbiddenException("You are not authorized for this action");
         }
         List<DailyClicksResponse> dailyClicks = dailyStatsRepository
-                .findByShortUrlIdOrderByStatDateDesc(shortUrl.getId())
+                .findByShortUrlIdAndStatDateBetweenOrderByStatDateDesc(shortUrl.getId(), start, end)
                 .stream()
                 .map(stats ->
                         new DailyClicksResponse(stats.getStatDate(), stats.getClicks())).toList();
