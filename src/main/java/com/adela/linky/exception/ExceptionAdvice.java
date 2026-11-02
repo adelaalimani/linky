@@ -2,6 +2,7 @@ package com.adela.linky.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -68,6 +69,15 @@ public class ExceptionAdvice {
     public ResponseEntity<String> handleForbiddenException(ForbiddenException ex) {
         log.warn("Forbidden exception: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
+    /**
+     * Handles unknown properties in a request body.
+     */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<String> handlePropertyReferenceException(PropertyReferenceException ex) {
+        log.warn("Invalid property: {}", ex.getPropertyName());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     /**

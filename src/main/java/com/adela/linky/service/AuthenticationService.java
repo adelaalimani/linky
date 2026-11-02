@@ -53,7 +53,8 @@ public class AuthenticationService {
                 )
         );
         User user = (User) authentication.getPrincipal();
-        String token = jwtTokenProvider.generateAccessToken(AuthUser.from(user));
+        AuthUser authUser = AuthUser.from(user);
+        String token = jwtTokenProvider.generateAccessToken(authUser);
         log.info("User {} logged in", user.getUsername());
         return new AuthenticationResponse(token);
     }
@@ -87,7 +88,7 @@ public class AuthenticationService {
     }
 
     private void checkUserEmail(String email) {
-        boolean userExists = userRepository.existsByEmailIgnoreCase(email);
+        boolean userExists = userRepository.existsByEmail(email.trim().toLowerCase());
         if (userExists) {
             throw new ConflictException("User with email " + email + " already exists");
         }
